@@ -8,11 +8,12 @@ rem o cmd do Windows pode ter problemas com arquivos contendo acentuações.
 rem
 rem Objetivo: Supondo que você tenha um arquivo local de FirebirdSQL,
 rem por exemplo, backup.fbk, você simplesmente vai ate o cmd e executa:
-rem :  fbrest-database-from-fbk.cmd backup.fbk dados.fdb
-rem e o script fará a restauração para você. O script utiliza as variaveis de
-rem ambiente ISC_USER e ISC_PASSWORD para suprimir a digitação da senha e a
-rem mesma não ficar exposta dentro deste script, então tenha certeza de ter
-rem definido estas variaives para o usuario/senha que costumeiramente utiliza.
+rem :  fbrest-database-from-fbk.cmd "backup-2022-09-30+09h37m29s.fbk" teste.fdb
+rem e o script fará a restauração para você como teste.fdb. 
+rem O script utiliza as variaveis de ambiente ISC_USER e ISC_PASSWORD para 
+rem suprimir a digitação da senha e a mesma não ficar exposta dentro 
+rem deste script, então tenha certeza de ter definido estas variaives para 
+rem o usuario/senha que costumeiramente utiliza.
 rem Claro que poderia usar o gbak diretamente, mas se fará isso muitas vezes 
 rem é bom ter um script que agiliza.
 rem Use o recurso do TAB de autocompletar no cmd para não ter que digitar
