@@ -19,7 +19,7 @@ rem Claro que poderia usar o gbak diretamente, mas se fará isso muitas vezes
 rem é bom ter um script que agiliza esse esforço.
 rem Use o recurso do TAB de autocompletar no cmd para não ter que digitar
 rem os nomes de arquivos por inteiro.
-SETLOCAL ENABLEDELAYEDEXPANSION
+setlocal EnableExtensions
 
 rem =
 rem = Variaveis que precisa ser setadas e/ou confirmadas
@@ -34,13 +34,9 @@ rem estabelecendo o usuario e senha que tem acesso
 rem ao database no servidor remoto. Eles devem estar previamente 
 rem definidos na area de ambiente, se não estiver, assume o mesmo
 rem que o local
-if %FDB_REMOTE_SERVER%. == . set FDB_REMOTE_SERVER=fbserver
-if %FDB_REMOTE_USER%. == . set FDB_REMOTE_USER=%ISC_USER%
-if %FDB_REMOTE_PASSWORD%. == . set FDB_REMOTE_PASSWORD=%LOCAL_PASSWORD%
+if %FDB_REMOTE_USER%. == . goto no_params
+if %FDB_REMOTE_PASSWORD%. == . goto no_params
 
-rem caso o nome do database(segundo parametro) nao seja mencionado
-rem entao assume o nome padrao definido abaixo
-set default_dbname=noname.fdb
 rem opcoes de backup
 set bak_options=-v -b -t
 rem opcoes de restauracao
@@ -54,32 +50,31 @@ set curdir=%CD%
 rem Primeiro parametro define o banco de dados remoto que será 
 rem feito um backup para o disco local e depois restaurado
 set fdb_remote=%1
-rem se o primeiro parametro nao for informado entao assume o servidor 
-rem %FDB_REMOTE_SERVER% com o banco de dados default
-if %fdb_remote%. == . set fdb_remote=%FDB_REMOTE_SERVER%:%default_dbname%
-
-rem =
-rem = Desse ponto em diante, não altere nada
-rem =
-
+if %fdb_remote%. == . goto no_params
 rem o segundo parametro será o database local
 set fdb_local=%2
-if %fdb_local%. == . set fdb_local=%curdir%\%default_dbname%
+if %fdb_local%. == . goto no_params
 rem usa -r[eplace] caso o banco de dados local exista
 rem ou -c[reate] para criá-lo localmente
 if exist %fdb_local% set rest_options=%rest_options% -rep
 if not exist %fdb_local% set rest_options=%rest_options% -c
 
 rem definindo o nome do arquivo de backup local
-set fbk_local=%curdir%\%default_dbname%.fbk
-if exist %fbk_local% del /f /q %fbk_local%
+:LoopParaArqUnico
+set "fbk_local=%curdir%\tmp~%RANDOM%.fbk"
+if exist "%fbk_local%" goto :LoopParaArqUnico
+
+set IS_SET_PASS_REMOTO=Nao
+set IS_SET_PASS_LOCAL=Nao
+if not %FDB_REMOTE_PASSWORD%.== . set IS_SET_PASS_REMOTO=Sim
+if not %ISC_PASSWORD%. == . set IS_SET_PASS_LOCAL=Sim
 
 echo ========================================
 echo Backup remoto de: %fdb_remote%
 echo Backup remoto para o local: %fbk_local%
-echo Usuario Remoto: %FDB_REMOTE_SERVER%\%ISC_USER%
-echo Usuario Local: .\%ISC_USER%
-echo Database Local: %fdb_local%
+echo A ser restaurado como: %fdb_local%
+echo Usuario Remoto: %FDB_REMOTE_USER%, senha definida: %IS_SET_PASS_REMOTO%
+echo Usuario  Local: %ISC_USER%, senha definida: %IS_SET_PASS_LOCAL%
 echo ========================================
 if %need_enter% GTR 0 (
   echo Pressione [ENTER] para prosseguir ou [CTRL+C] para cancelar
@@ -93,7 +88,7 @@ set exec_cmd=%gbak% %bak_options% -user %FDB_REMOTE_USER% -password %FDB_REMOTE_
 %exec_cmd%
 if not %ERRORLEVEL% equ 0 (
   echo "problema com:"
-  echo cmd:%exec_cmd% 
+  echo %exec_cmd% 
   goto fim
 )
 
@@ -104,19 +99,27 @@ set exec_cmd=%gbak% %rest_options% -user %ISC_USER% -password %ISC_PASSWORD% %fb
 %exec_cmd%
 if not %ERRORLEVEL% equ 0 (
   echo "problema com:"
-  echo cmd:%exec_cmd% 
+  echo %exec_cmd% 
   goto fim
 )
-echo Restauracao de %fbk_local% como %fdb_local% finalizada.
+echo Restauracao de arquivo finalizada.
 goto fim
 
 :no_params
 echo Modo de usar:
-echo    %curcmd% [databaseremoto] 
-echo O [databaseremoto] devera incluir o endereco do servidor remoto, seja caminho ou alias.
-echo O [databaselocal] devera incluir o endereco local para o arquivo de dados. Se suprimido será assumido %fdb_local%.
-echo ex: %curcmd% %FDB_REMOTE_SERVER%:%default_dbname% %fdb_local%
-echo para transferir %fdb_local% para %curdir%
+echo %curcmd% host/3050:/path/to/database.fdb c:\temp\database-local.fdb
+echo Onde:
+echo host/3050:/path/to/database.fdb refere-se ao endereco remoto do banco de dados, por ser o caminho ou um alias.
+echo c:\temp\database-local.fdb refere-se aonde o arquivo será restaurado ou transferido.
+echo ex: %curcmd% localhost/3050:%curdir%\database.fdb %curdir%\database-local.fdb
+echo para transferir para %curdir%\database-local.fdb
+echo Onde localhost é o nome remoto do servidor e 3050 refere-se a porta que atende o serviço.
+if not %FDB_REMOTE_PASSWORD%.== . (
+  echo Para o correto funcionamento deste script defina as seguintes variaiveis de ambiente:
+  echo set FDB_REMOTE_USER=usuario_remoto(SYSDBA)
+  echo set FDB_REMOTE_PASSWORD=senha do usuario_remoto(masterkey)
+  echo Assim o script suprimirá corretamente a digitação de senha.
+)
 set need_enter=1
 goto fim
 
