@@ -2,11 +2,13 @@
 É um conjunto de scripts para restaurar backup do FirebirdSQL para um disco local.
 
 **fbrest-database-from-fbk.cmd**
+
 Objetivo: Supondo que você tenha um arquivo local de FirebirdSQL, por exemplo, backup.fbk, você simplesmente vai ate o cmd e executa:
 fbrest-database-from-fbk.cmd backup.fbk dados.fdb
 E o script fará a restauração para você. 
 
 **fbrest-database-from-server.cmd**
+
 Objetivo: Supondo que você queira transferir um banco de dados remoto do FirebirdSQL para uma base local, simplesmente vai ate o cmd e executa:
 fbrest-database-from-server.cmd fbserver01:/meusdados.fdb meusdadosdev.fdb
 E o script fará um backup de fbserver01:/meusdados.fdb e o restaurará localmente como meusdadosdev.fdb. 
